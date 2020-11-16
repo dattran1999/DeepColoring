@@ -84,9 +84,11 @@ def random_scale(scale_variance=0.2, **kwargs):
             mode = 'reflect'
             order = 1
 
-        s = 1. + numpy.clip(scale_variance * numpy.random.randn(), -scale_variance, scale_variance)
+        s = 1. + numpy.clip(scale_variance *
+                            numpy.random.randn(), -scale_variance, scale_variance)
         return skimage.transform. \
-            rescale(x, s, mode=mode, order=order, cval=0, preserve_range=True, **kwargs)
+            rescale(x, s, mode=mode, order=order, cval=0,
+                    preserve_range=True, **kwargs)
 
     return f
 
@@ -95,7 +97,8 @@ def random_noise(prob=0.5, gain_random=0.001):
     def f(x, is_data=False):
         if is_data:
             if numpy.random.random() < prob:
-                x = skimage.util.random_noise(x, var=abs(numpy.random.randn() * gain_random))
+                x = skimage.util.random_noise(
+                    x, var=abs(numpy.random.randn() * gain_random))
         return x
 
     return f
@@ -105,7 +108,8 @@ def blur(sigma=1., prob=0.5, gain_random=0.1):
     def f(x, is_data=False):
         if is_data:
             if numpy.random.random() < prob:
-                x = skimage.filters.gaussian(x, sigma=abs(sigma + gain_random * numpy.random.randn()),preserve_range=True,multichannel=True)
+                x = skimage.filters.gaussian(x, sigma=abs(
+                    sigma + gain_random * numpy.random.randn()), preserve_range=True, multichannel=True)
         return x
 
     return f
@@ -152,11 +156,13 @@ def random_transform(max_scale, max_angle=90., max_trans=0., keep_aspect_ratio=T
             scaley = 1. + numpy.random.randn() * max_scale
 
         shift_y, shift_x = numpy.array(x.shape[:2]) / 2.
-        shift = skimage.transform.SimilarityTransform(translation=[-shift_x, -shift_y])
+        shift = skimage.transform.SimilarityTransform(
+            translation=[-shift_x, -shift_y])
         shift_inv = skimage.transform.SimilarityTransform(translation=[shift_x + numpy.random.randn() * max_trans,
                                                                        shift_y + numpy.random.randn() * max_trans])
         trans = skimage.transform.SimilarityTransform(
-            rotation=numpy.deg2rad(numpy.random.uniform(-max_angle, max_angle)),
+            rotation=numpy.deg2rad(
+                numpy.random.uniform(-max_angle, max_angle)),
             scale=(scalex, scaley))
         final_transform = (shift + (trans + shift_inv)).inverse
 
@@ -236,7 +242,8 @@ def clip_patch_random(minsize, maxsize):
         return x[cx:cx + f.size[0], cy:cy + f.size[1]]
 
     def prepare():
-        f.size = (numpy.random.randint(minsize[0], maxsize[0]) * 8, numpy.random.randint(minsize[1], maxsize[1]) * 8)
+        f.size = (numpy.random.randint(
+            minsize[0], maxsize[0]) * 8, numpy.random.randint(minsize[1], maxsize[1]) * 8)
 
     f.prepare = prepare
     f.prepare()
@@ -278,17 +285,20 @@ def visualize(x_np, y_np, min_point=40, draw_text=True, cmap="Set1"):
         if draw_text:
             ax2.text(c - 3, r + 3, r'{}'.format(int(obj)), fontdict=font)
 
-    ax2.imshow(picture, cmap=matplotlib.colors.ListedColormap(color_map[:y_np.shape[0]]))
+    ax2.imshow(picture, cmap=matplotlib.colors.ListedColormap(
+        color_map[:y_np.shape[0]]))
 
-    y_np = softmax(y_np)
-    f2, ax = plt.subplots(int(math.ceil(y_np.shape[0] / 3.)), 3, figsize=(20, 10))
+    # y_np = softmax(y_np)
+    f2, ax = plt.subplots(
+        int(math.ceil(y_np.shape[0] / 3.)), 3, figsize=(20, 10))
     for index in range(y_np.shape[0]):
         color_index = -1
         color_index2 = index
 
         cmap = matplotlib.colors.LinearSegmentedColormap.from_list('xxx',
                                                                    [color_map[color_index], color_map[color_index2]])
-        ax[index / 3, index % 3].imshow(y_np[index, :, :], vmin=0, vmax=1, cmap=cmap)
+        ax[index // 3, index %
+            3].imshow(y_np[index, :, :], vmin=0, vmax=1, cmap=cmap)
 
     return f1, f2
 
@@ -304,7 +314,8 @@ def best_dice(l_a, l_b):
     for a in l_a:
         best_iter = 0
         for b in l_b:
-            inter = 2 * float(numpy.sum(a * b)) / float(numpy.sum(a) + numpy.sum(b))
+            inter = 2 * float(numpy.sum(a * b)) / \
+                float(numpy.sum(a) + numpy.sum(b))
             if inter > best_iter:
                 best_iter = inter
         result += best_iter

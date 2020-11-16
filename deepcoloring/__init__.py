@@ -1,7 +1,7 @@
-from halo_loss import halo_loss, \
+from .halo_loss import halo_loss, \
     build_halo_mask
-from architecture import EUnet
-from utils import visualize, \
+from .architecture import EUnet
+from .utils import visualize, \
     clip_patch_random, \
     clip_patch, \
     vgg_normalize, \
@@ -20,5 +20,5 @@ from utils import visualize, \
     blur,\
     rgb2gray,\
     postprocess
-from data import Reader
-from train import train
+from .data import Reader
+from .train import train

@@ -5,10 +5,11 @@ import torch.nn as nn
 
 
 def clip_align(x, y):
-    deltax = (y.size(2) - x.size(2)) / 2
-    deltay = (y.size(3) - x.size(3)) / 2
+    deltax = (y.size(2) - x.size(2)) // 2
+    deltay = (y.size(3) - x.size(3)) // 2
 
     if deltax > 0 and deltay > 0:
+        print(deltax, deltay)
         y = y[:, :, deltax:-deltax, deltay:-deltay]
     return y
 
@@ -20,7 +21,8 @@ class DownModule(nn.Module):
 
     def __init__(self, in_dims, out_dims, repeats=1, padding=0, non_linearity=nn.ELU, use_dropout=False, use_bn=False):
         super(DownModule, self).__init__()
-        layers = [nn.Conv2d(in_dims, out_dims, 3, padding=padding), non_linearity(inplace=True)]
+        layers = [nn.Conv2d(in_dims, out_dims, 3, padding=padding),
+                  non_linearity(inplace=True)]
 
         for i in range(repeats):
             layers += [nn.Conv2d(out_dims, out_dims, 3, padding=padding)]
@@ -47,21 +49,33 @@ class UpModule(nn.Module):
     def __init__(self, in_dims, out_dims, repeats=1, padding=0, non_linearity=nn.ELU):
         super(UpModule, self).__init__()
         self.conv = nn.ConvTranspose2d(in_dims, out_dims, 2, stride=2)
-        layers = [nn.Conv2d(2 * out_dims, out_dims, 3, padding=padding), non_linearity(inplace=True)]
+        layers = [nn.Conv2d(2 * out_dims, out_dims, 3,
+                            padding=padding), non_linearity(inplace=True)]
         for i in range(repeats):
-            layers += [nn.Conv2d(out_dims, out_dims, 3, padding=padding), non_linearity(inplace=True)]
+            layers += [nn.Conv2d(out_dims, out_dims, 3,
+                                 padding=padding), non_linearity(inplace=True)]
 
-        self.normconv = nn.Sequential(*[nn.Conv2d(out_dims, out_dims, 2, padding=padding), non_linearity(inplace=True)])
+        self.normconv = nn.Sequential(
+            *[nn.Conv2d(out_dims, out_dims, 2, padding=padding), non_linearity(inplace=True)])
         self.convs = nn.Sequential(*layers)
 
     def forward(self, x, y):
 
         x = self.conv(x)
 
-        if 1 == y.size(2) % 2:
+        if y.size(2) % 2 == 1 and y.size(3) % 2 == 1:
             y = self.normconv(y)
 
         y = clip_align(x, y)
+        print(x.shape, y.shape)
+        diff_w = y.size(2) - x.size(2)
+        diff_h = y.size(3) - x.size(3)
+        if diff_w > 0:
+            y = y[:, :, diff_w:, :]
+        if diff_h > 0:
+            y = y[:, :, :, diff_h:]
+        if diff_h > 0 or diff_w > 0:
+            print(x.shape, y.shape)
 
         x = torch.cat([x, y], dim=1)
         return self.convs(x)
